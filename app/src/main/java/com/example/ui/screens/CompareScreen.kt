@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -98,6 +99,7 @@ import com.example.ui.theme.AuraSurface
 import com.example.ui.theme.DiscoveryGradient
 import com.example.ui.theme.DiscoveryMagenta
 import com.example.ui.theme.DiscoveryViolet
+import com.example.data.CompareResultsHelper
 import kotlinx.coroutines.delay
 
 import androidx.compose.runtime.key
@@ -268,9 +270,7 @@ fun CompareScreen(
 
             if (session.isComplete) {
                 val topItems = remember(session.selectedIds, mediaItemsMap) {
-                    session.selectedIds.mapNotNull { mediaItemsMap[it] }
-                        .sortedByDescending { it.eloRating }
-                        .take(2)
+                    CompareResultsHelper.getRankedResults(session.selectedIds, mediaItemsMap)
                 }
                 CompareSelectionCompleteView(
                     session = session,
@@ -948,8 +948,7 @@ private fun CompareSelectionResultsOverlay(
             )
 
             val rankedItems = remember(session.selectedIds, mediaItemsMap) {
-                session.selectedIds.mapNotNull { mediaItemsMap[it] }
-                    .sortedByDescending { it.eloRating }
+                CompareResultsHelper.getRankedResults(session.selectedIds, mediaItemsMap)
             }
 
             LazyColumn(
@@ -958,51 +957,80 @@ private fun CompareSelectionResultsOverlay(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 itemsIndexed(rankedItems) { index, item ->
-                    Row(
+                    val isFirst = index == 0
+                    
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(AuraSubtleSurface)
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isFirst) DiscoveryViolet.copy(alpha = 0.05f) else AuraSubtleSurface)
+                            .border(
+                                width = if (isFirst) 2.dp else 1.dp,
+                                brush = if (isFirst) DiscoveryGradient else SolidColor(AuraSubtleBorder),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(if (isFirst) 16.dp else 12.dp)
                     ) {
-                        Text(
-                            text = "#${index + 1}",
-                            fontWeight = FontWeight.Black,
-                            color = DiscoveryViolet,
-                            fontSize = 16.sp,
-                            modifier = Modifier.width(36.dp)
-                        )
-                        
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(AuraMutedSlate)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            AsyncImage(
-                                model = if (item.imageUrl.isNotEmpty()) item.imageUrl else item.uriPath,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = item.title,
-                                fontWeight = FontWeight.Bold,
-                                color = AuraMidnight,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                text = "#${index + 1}",
+                                fontWeight = FontWeight.Black,
+                                color = if (isFirst) DiscoveryViolet else AuraSlate,
+                                fontSize = if (isFirst) 20.sp else 16.sp,
+                                modifier = Modifier.width(if (isFirst) 44.dp else 36.dp)
                             )
-                            Text(
-                                text = "ELO: ${item.eloRating.toInt()}",
-                                fontSize = 11.sp,
-                                color = AuraSlate
-                            )
+                            
+                            Box(
+                                modifier = Modifier
+                                    .size(if (isFirst) 80.dp else 48.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(AuraMutedSlate)
+                            ) {
+                                AsyncImage(
+                                    model = if (item.imageUrl.isNotEmpty()) item.imageUrl else item.uriPath,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.width(16.dp))
+                            
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = item.title,
+                                    fontWeight = FontWeight.Bold,
+                                    style = if (isFirst) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                                    color = AuraMidnight,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "ELO SCORE",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AuraSlate.copy(alpha = 0.7f),
+                                    letterSpacing = 1.sp
+                                )
+                                Text(
+                                    text = item.eloRating.toInt().toString(),
+                                    fontSize = if (isFirst) 18.sp else 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DiscoveryViolet
+                                )
+                            }
+                            
+                            if (isFirst) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Winner",
+                                    tint = DiscoveryViolet,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
                     }
                 }
