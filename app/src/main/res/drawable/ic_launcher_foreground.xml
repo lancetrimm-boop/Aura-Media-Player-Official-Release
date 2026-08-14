@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Geometric A Mark (Authoritative, Scaled for Launcher Safe Zone) -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.75"
+        android:scaleY="0.75">
+
+        <!-- Left Pillar -->
+        <path
+            android:fillColor="#0F1117"
+            android:pathData="M42,35 L50,35 L25,85 L17,85 Z" />
+
+        <!-- Right Pillar -->
+        <path
+            android:fillColor="#0F1117"
+            android:pathData="M58,35 L66,35 L91,85 L83,85 Z" />
+
+        <!-- Centered Aura Core (Gradient Circle) -->
+        <path
+            android:pathData="M54,60 m-12,0 a12,12 0 1,1 24,0 a12,12 0 1,1 -24,0">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="42"
+                    android:startY="48"
+                    android:endX="66"
+                    android:endY="72">
+                    <item android:offset="0.0" android:color="#8B5CF6" />
+                    <item android:offset="0.5" android:color="#D946EF" />
+                    <item android:offset="1.0" android:color="#EC4899" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+
+</vector>
