@@ -1718,6 +1718,7 @@ class MediaRepository(
                         statusText = "Importing $processed of $total files ($percent%)"
                     )
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException || e is java.util.concurrent.CancellationException) throw e
                     // Skip invalid file
                 }
             }
@@ -1949,6 +1950,8 @@ class MediaRepository(
                 val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
 
                 while (cursor.moveToNext()) {
+                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                    
                     val id = cursor.getLong(idColumn)
                     val localId = "local_vid_$id"
                     val contentUri = ContentUris.withAppendedId(videoUri, id)
@@ -2026,6 +2029,8 @@ class MediaRepository(
                 val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)
 
                 while (cursor.moveToNext()) {
+                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+
                     val id = cursor.getLong(idColumn)
                     val localId = "local_img_$id"
                     val contentUri = ContentUris.withAppendedId(imageUri, id)
@@ -2150,7 +2155,7 @@ class MediaRepository(
         val batchSize = 25
 
         pending.forEachIndexed { index, entity ->
-            if (!currentCoroutineContext().isActive) return@forEachIndexed
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             
             _scanProgress.update { it.copy(
                 statusText = "Processing ${index + 1} of $total: ${entity.title}",
@@ -2215,6 +2220,7 @@ class MediaRepository(
                     }
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException || e is java.util.concurrent.CancellationException) throw e
                 Log.e("MediaRepository", "ProcessPending: Error analyzing ${entity.title}. Skipping without rejection.", e)
             }
         }
@@ -3583,6 +3589,8 @@ stats ->
         }
 
         allItems.forEach { entity ->
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            
             // Re-validate if it was pending, untested, or known to be unplayable but still in the table
             val status = try { CompatibilityStatus.valueOf(entity.compatibilityStatus) } catch (e: Exception) { CompatibilityStatus.UNSUPPORTED }
             val isPending = status == CompatibilityStatus.ANALYSIS_PENDING
@@ -3623,6 +3631,7 @@ stats ->
                         }
                     }
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException || e is java.util.concurrent.CancellationException) throw e
                     Log.e("MediaRepository", "Failed to reconcile ${entity.title}: ${e.message}. Skipping rejection.")
                 }
             }

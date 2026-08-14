@@ -99,6 +99,7 @@ object BlueprintImplementationManifestGenerator {
             rollbackCriteria = "Personalization score drops below baseline ${blueprint.baselineState.engagementScore}",
             implementationStatus = ImplementationStatus.PENDING,
             isCausallyValidated = false, // Set to false by default as per requirement
+            filesToModify = listOf(file),
             repositoryUrl = currentRepositoryUrl,
             branch = currentBranch,
             commitHash = currentCommitHash
@@ -110,10 +111,11 @@ object BlueprintImplementationManifestGenerator {
         blueprint: StrategyBlueprint,
         highestTier: EvidenceTier
     ): CodeModificationPlan {
+        val fileName = "TasteDNA.kt"
         return CodeModificationPlan(
             modificationId = UUID.randomUUID().toString(),
             componentName = "TasteDNA",
-            sourceFile = "com/example/data/TasteDNA.kt",
+            sourceFile = fileName,
             packageName = "com.example.data",
             className = "TasteDNA",
             methodOrProperty = mod.dimension,
@@ -130,6 +132,7 @@ object BlueprintImplementationManifestGenerator {
             rollbackCriteria = "User engagement regression",
             implementationStatus = ImplementationStatus.PENDING,
             isCausallyValidated = false,
+            filesToModify = listOf(fileName),
             repositoryUrl = currentRepositoryUrl,
             branch = currentBranch,
             commitHash = currentCommitHash
@@ -138,7 +141,7 @@ object BlueprintImplementationManifestGenerator {
 
     private fun resolveComponent(componentName: String): Triple<String, String, String> {
         val pkg = "com.example.data"
-        val path = "com/example/data/"
+        val path = ""
         return when (componentName) {
             "AISkipEngine" -> Triple(pkg, "AISkipEngine", path + "AISkipEngine.kt")
             "RecommendationEngine" -> Triple(pkg, "RecommendationEngine", path + "RecommendationEngine.kt")

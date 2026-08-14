@@ -3,26 +3,42 @@ package com.example.ui.screens
 import com.example.data.*
 import com.example.data.db.*
 import com.example.data.blueprint.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.*
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Unit tests for the Suggested Improvement Review Workflow.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
+@OptIn(ExperimentalCoroutinesApi::class)
 class ImprovementReviewTest {
 
+    private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: IntelligenceViewModel
     private lateinit var fakeDao: SystemAnalysisTest.FakeIntelligenceDao
     private lateinit var repository: IntelligenceRepository
 
     @Before
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         fakeDao = SystemAnalysisTest.FakeIntelligenceDao()
         repository = IntelligenceRepository(fakeDao)
         viewModel = IntelligenceViewModel(repository)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test
