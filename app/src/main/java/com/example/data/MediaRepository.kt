@@ -48,6 +48,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.Flow
@@ -693,7 +702,18 @@ class MediaRepository(
                     // Launch non-blocking data collection immediately
                     launch {
                         Log.d("AURA_SCAN_RUNTIME", "[REPO] mediaItems Flow collection starting.")
-                        db.mediaDao().getAllMedia().collect { entities ->
+                        db.mediaDao().getAllMedia()
+                            .conflate()
+                            .transform { entities ->
+                                emit(entities)
+                                // AURA P1 STABILITY: Batch UI updates during heavy ingestion.
+                                // If a scan is active, we introduce a cooldown to prevent
+                                // UI list churn and excessive recomposition.
+                                if (_scanProgress.value.isScanning) {
+                                    delay(3000)
+                                }
+                            }
+                            .collect { entities ->
                             Log.d("AURA_SCAN_RUNTIME", "[REPO] mediaItems Flow emitted. Raw entity count: ${entities.size}")
                             val items = entities.map { it.toMediaItem() }.filter { item ->
                                 // Enforce Photos and Videos ONLY
@@ -2126,6 +2146,9 @@ class MediaRepository(
         val rejectedItems = db.rejectedMediaDao().getAllRejectedMediaSync()
         val rejectedHashes = rejectedItems.mapNotNull { it.contentHash }.toSet()
 
+        val batch = mutableListOf<MediaEntity>()
+        val batchSize = 25
+
         pending.forEachIndexed { index, entity ->
             if (!currentCoroutineContext().isActive) return@forEachIndexed
             
@@ -2162,7 +2185,12 @@ class MediaRepository(
                         convertedUri = report.convertedUri ?: "",
                         lastCompatibilityCheckTimestamp = System.currentTimeMillis()
                     )
-                    db.mediaDao().update(updatedEntity)
+                    batch.add(updatedEntity)
+                    
+                    if (batch.size >= batchSize) {
+                        db.mediaDao().updateAll(batch)
+                        batch.clear()
+                    }
                 } else {
                     // ONLY reject if the status is explicitly ineligible (unsupported/corrupt)
                     // and NOT if it just failed analysis due to timeout/crash.
@@ -2189,6 +2217,10 @@ class MediaRepository(
             } catch (e: Exception) {
                 Log.e("MediaRepository", "ProcessPending: Error analyzing ${entity.title}. Skipping without rejection.", e)
             }
+        }
+
+        if (batch.isNotEmpty()) {
+            db.mediaDao().updateAll(batch)
         }
 
         _scanProgress.value = ScanProgressState(
@@ -3268,7 +3300,12 @@ stats ->
                 StandardSortOption.RANDOM -> {
                     // AURA P1 STABILITY: Deterministic normalization before shuffle
                     // ensures resulting order is independent of physical database input sequence.
-                    items.sortedBy { it.id }.shuffled(kotlin.random.Random(sessionSeed))
+                    // FIXED: Use hash-based sorting for true stability as new items arrive.
+                    // This ensures that existing items maintain their relative order,
+                    // and new items are inserted at deterministic positions.
+                    items.sortedBy { item ->
+                        (item.id + sessionSeed).hashCode()
+                    }
                 }
             }
         } else {
