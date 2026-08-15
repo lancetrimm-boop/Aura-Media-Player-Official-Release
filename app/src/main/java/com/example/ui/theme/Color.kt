@@ -25,19 +25,18 @@ val DiscoveryGradientVertical = Brush.verticalGradient(
     colors = listOf(DiscoveryViolet, DiscoveryMagenta, DiscoveryHotPink)
 )
 
-// --- LEGACY COMPATIBILITY TOKENS (REMAPPED TO NEW SYSTEM) ---
-// These are preserved to prevent immediate mass breakage in Phase 1,
-// but their values now align with the new authoritative palette.
+// --- LEGACY COMPATIBILITY TOKENS ---
 val AuraPurple = DiscoveryViolet
 val AuraPurpleLight = DiscoveryViolet.copy(alpha = 0.7f)
-val AuraPurpleDark = DiscoveryViolet // Could be tuned if needed
-val AuraPurpleContainer = Color(0xFFF3E8FF) // To be reviewed in later phases
+val AuraPurpleDark = DiscoveryViolet 
+val AuraPurpleContainer = Color(0xFFF3E8FF)
 
 val AuraMagenta = DiscoveryMagenta
 val AuraMagentaDark = DiscoveryMagenta
 
 val AuraBrandGradient = DiscoveryGradient
 val AuraBrandGradientVertical = DiscoveryGradientVertical
+
 
 val AuraBackground = AuraCrispWhite
 val AuraSurface = AuraSubtleSurface

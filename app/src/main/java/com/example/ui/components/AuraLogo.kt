@@ -22,7 +22,7 @@ import com.example.ui.theme.DiscoveryGradient
 
 /**
  * Authoritative Brand Name.
- * "Aura Media Player 1.0"
+ * "Aura"
  */
 @Composable
 fun AuraBrandName(
@@ -89,7 +89,7 @@ fun AuraLogoIcon(
 
 /**
  * Full Aura Branding Lockup.
- * Aura Media Player 1.0
+ * "Aura" + "Media Player"
  */
 @Composable
 fun AuraFullLockup(
@@ -110,6 +110,14 @@ fun AuraFullLockup(
             fontWeight = FontWeight.Bold,
             fontSize = fontSize.sp,
             letterSpacing = 0.sp
+        )
+        Text(
+            text = stringResource(id = R.string.brand_description),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            fontSize = (fontSize * 0.6f).sp,
+            letterSpacing = 1.sp
         )
     }
 }
@@ -136,5 +144,40 @@ fun AuraWordmark(
             fontSize = fontSize.sp,
             letterSpacing = 0.sp
         )
+    }
+}
+
+/**
+ * Full Product Category Lockup.
+ */
+@Composable
+fun AuraProductLockup(
+    modifier: Modifier = Modifier,
+    fontSize: Float = 22f
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
+        AuraLogoMark(size = (fontSize * 1.2f).dp)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                text = stringResource(id = R.string.brand_name_full),
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                fontSize = fontSize.sp,
+                letterSpacing = 0.sp
+            )
+            Text(
+                text = stringResource(id = R.string.brand_description),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Normal,
+                fontSize = (fontSize * 0.5f).sp,
+                letterSpacing = 0.5.sp
+            )
+        }
     }
 }
