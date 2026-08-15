@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 class DatabaseSecurityException(message: String, cause: Throwable) : Exception(message, cause)
 
@@ -580,8 +580,8 @@ abstract class AuraDatabase : RoomDatabase() {
                     // 2. Retrieve the persistent passphrase in hex format for SQLCipher raw usage
                     val hexKey = PassphraseManager.getPassphraseAsHex(context)
                     
-                    // 3. Build Room with encryption SupportFactory using the raw hex key
-                    val factory = SupportFactory(hexKey.toByteArray())
+                    // 3. Build Room with encryption SupportOpenHelperFactory using the raw hex key
+                    val factory = SupportOpenHelperFactory(hexKey.toByteArray())
                     val instance = Room.databaseBuilder(
                         context.applicationContext,
                         AuraDatabase::class.java,

@@ -24,7 +24,7 @@ object SQLCipherInitializer {
             
             try {
                 Log.d(TAG, "Loading SQLCipher native libraries...")
-                net.sqlcipher.database.SQLiteDatabase.loadLibs(context)
+                System.loadLibrary("sqlcipher")
                 isInitialized = true
                 Log.i(TAG, "SQLCipher libraries loaded successfully.")
             } catch (t: Throwable) {

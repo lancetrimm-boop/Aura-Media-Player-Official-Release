@@ -633,7 +633,7 @@ class MediaRepository(
                     if (dbPath.exists()) {
                         try {
                             val hexKey = com.example.data.db.PassphraseManager.getPassphraseAsHex(context)
-                            net.sqlcipher.database.SQLiteDatabase.openDatabase(dbPath.absolutePath, hexKey, null, net.sqlcipher.database.SQLiteDatabase.OPEN_READWRITE).use { rawDb ->
+                            net.zetetic.database.sqlcipher.SQLiteDatabase.openDatabase(dbPath.absolutePath, hexKey.toByteArray(), null, net.zetetic.database.sqlcipher.SQLiteDatabase.OPEN_READWRITE, null).use { rawDb ->
                                 Log.d("AURA_INIT", "Current raw DB version: ${rawDb.version}")
                                 if (rawDb.version == 0) {
                                     // RECOVERY: If version is 0 (likely due to export without version preservation), 

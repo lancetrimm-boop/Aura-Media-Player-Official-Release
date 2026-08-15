@@ -2,7 +2,7 @@ package com.example.data.db
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase as StandardSQLiteDatabase
-import net.sqlcipher.database.SQLiteDatabase as EncryptedSQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteDatabase as EncryptedSQLiteDatabase
 import android.util.Log
 import java.io.File
 
@@ -121,12 +121,12 @@ object LegacyDatabaseEncryptionMigrator {
 
         // 1. Pre-initialize the encrypted destination (Approach B)
         // This ensures SQLCipher initializes headers and confirms the key is working.
-        EncryptedSQLiteDatabase.openOrCreateDatabase(tempDbPath, hexKey, null).use { db ->
+        EncryptedSQLiteDatabase.openOrCreateDatabase(tempDbPath, hexKey.toByteArray(), null, null).use { db ->
             db.version = legacyVersion // Preserve the version pragma for Room migration logic
         }
 
         // 2. Open the plaintext database using SQLCipher with an empty key
-        val plaintextDb = EncryptedSQLiteDatabase.openDatabase(originalDbPath.absolutePath, "", null, EncryptedSQLiteDatabase.OPEN_READWRITE)
+        val plaintextDb = EncryptedSQLiteDatabase.openDatabase(originalDbPath.absolutePath, "".toByteArray(), null, EncryptedSQLiteDatabase.OPEN_READWRITE, null)
         try {
             // 3. Attach the new encrypted database
             // Note: Wrap the key in double quotes for SQL compatibility
@@ -149,7 +149,7 @@ object LegacyDatabaseEncryptionMigrator {
         // 6. Comprehensive Verification
         Log.i(TAG, "Verifying encrypted database integrity...")
         // Use raw hex key for verification open
-        val encryptedDb = EncryptedSQLiteDatabase.openDatabase(tempDbPath.absolutePath, hexKey, null, EncryptedSQLiteDatabase.OPEN_READONLY)
+        val encryptedDb = EncryptedSQLiteDatabase.openDatabase(tempDbPath.absolutePath, hexKey.toByteArray(), null, EncryptedSQLiteDatabase.OPEN_READONLY, null)
         try {
             // A. Check SQLCipher is actually active (Standard SQLite should fail on this file)
             if (!isDatabaseEncrypted(tempDbPath)) {
