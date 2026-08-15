@@ -3,6 +3,6 @@
     <item
         android:drawable="@drawable/aura_logo_mark"
         android:gravity="center"
-        android:width="72dp"
-        android:height="72dp" />
+        android:width="64dp"
+        android:height="64dp" />
 </layer-list>
