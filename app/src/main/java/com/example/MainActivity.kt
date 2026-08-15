@@ -522,6 +522,16 @@ fun AuraApp(repository: MediaRepository) {
                                 },
                                 onNavigateToCleanup = {
                                     currentRoute = NavDestination.CLEANUP_REVIEW.route
+                                },
+                                onNavigateToPrivacyPolicy = {
+                                    currentRoute = NavDestination.PRIVACY_POLICY.route
+                                }
+                            )
+                        }
+                        NavDestination.PRIVACY_POLICY.route -> {
+                            com.example.ui.screens.PrivacyPolicyScreen(
+                                onBack = {
+                                    currentRoute = NavDestination.PROFILE.route
                                 }
                             )
                         }

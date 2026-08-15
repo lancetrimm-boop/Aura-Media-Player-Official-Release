@@ -142,6 +142,7 @@ fun ProfileScreen(
     repository: com.example.data.MediaRepository,
     onNavigateToFavorites: () -> Unit,
     onNavigateToCleanup: () -> Unit,
+    onNavigateToPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasteDNA by repository.tasteDNA.collectAsStateWithLifecycle()
@@ -312,12 +313,21 @@ fun ProfileScreen(
                                 color = AuraSubtleSurface,
                                 border = androidx.compose.foundation.BorderStroke(1.dp, AuraSubtleBorder)
                             ) {
-                                SettingsClickRow(
-                                    icon = Icons.Outlined.Feedback,
-                                    title = "Customer Feedback",
-                                    subtitle = "Share your thoughts",
-                                    onClick = { showFeedbackDialog = true }
-                                )
+                                Column {
+                                    SettingsClickRow(
+                                        icon = Icons.Outlined.Feedback,
+                                        title = "Customer Feedback",
+                                        subtitle = "Share your thoughts",
+                                        onClick = { showFeedbackDialog = true }
+                                    )
+                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = AuraSubtleBorder.copy(alpha = 0.5f))
+                                    SettingsClickRow(
+                                        icon = Icons.Default.PrivacyTip,
+                                        title = "Privacy Policy",
+                                        subtitle = "How Aura protects your data",
+                                        onClick = { onNavigateToPrivacyPolicy() }
+                                    )
+                                }
                             }
                             
                             Spacer(modifier = Modifier.height(48.dp))
@@ -450,12 +460,21 @@ fun ProfileScreen(
                             color = AuraSubtleSurface,
                             border = androidx.compose.foundation.BorderStroke(1.dp, AuraSubtleBorder)
                         ) {
-                            SettingsClickRow(
-                                icon = Icons.Outlined.Feedback,
-                                title = "Customer Feedback",
-                                subtitle = "Share your thoughts about Aura experience",
-                                onClick = { showFeedbackDialog = true }
-                            )
+                            Column {
+                                SettingsClickRow(
+                                    icon = Icons.Outlined.Feedback,
+                                    title = "Customer Feedback",
+                                    subtitle = "Share your thoughts about Aura experience",
+                                    onClick = { showFeedbackDialog = true }
+                                )
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = AuraSubtleBorder.copy(alpha = 0.5f))
+                                SettingsClickRow(
+                                    icon = Icons.Default.PrivacyTip,
+                                    title = "Privacy Policy",
+                                    subtitle = "How Aura protects your data",
+                                    onClick = { onNavigateToPrivacyPolicy() }
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(48.dp))
