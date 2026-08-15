@@ -27,6 +27,21 @@ android {
     multiDexKeepProguard = file("multidex-config.pro")
   }
 
+  flavorDimensions += "edition"
+  productFlavors {
+    create("consumer") {
+      dimension = "edition"
+      buildConfigField("boolean", "ENABLE_DEVELOPER_TOOLS", "false")
+      buildConfigField("String", "BUILD_FLAVOR_NAME", "\"consumer\"")
+    }
+    create("developer") {
+      dimension = "edition"
+      applicationIdSuffix = ".developer"
+      buildConfigField("boolean", "ENABLE_DEVELOPER_TOOLS", "true")
+      buildConfigField("String", "BUILD_FLAVOR_NAME", "\"developer\"")
+    }
+  }
+
   signingConfigs {
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
@@ -43,11 +58,9 @@ android {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
-      buildConfigField("boolean", "ENABLE_DEVELOPER_TOOLS", "false")
     }
     debug {
       isMinifyEnabled = false
-      buildConfigField("boolean", "ENABLE_DEVELOPER_TOOLS", "true")
     }
   }
   compileOptions {
