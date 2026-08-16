@@ -206,9 +206,10 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
         SavedIntelligenceReportEntity::class,
         ContributionQueueEntity::class,
         SearchHistoryEntity::class,
-        PlaybackErrorLogEntity::class
+        PlaybackErrorLogEntity::class,
+        ConversionJobEntity::class
     ],
-    version = 34,
+    version = 37,
     exportSchema = false
 )
 @androidx.room.TypeConverters(IntelligenceConverters::class)
@@ -228,6 +229,7 @@ abstract class AuraDatabase : RoomDatabase() {
     abstract fun contributionQueueDao(): ContributionQueueDao
     abstract fun searchHistoryDao(): SearchHistoryDao
     abstract fun playbackErrorLogDao(): PlaybackErrorLogDao
+    abstract fun conversionJobDao(): ConversionJobDao
 
 
     companion object {
@@ -621,6 +623,63 @@ abstract class AuraDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_34_35 = object : Migration(34, 35) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `conversion_jobs` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        `mediaId` TEXT NOT NULL, 
+                        `sourceUri` TEXT NOT NULL, 
+                        `fileName` TEXT NOT NULL, 
+                        `mediaTitle` TEXT, 
+                        `sourceSize` INTEGER NOT NULL, 
+                        `sourceDurationMs` INTEGER NOT NULL, 
+                        `sourceVideoCodec` TEXT, 
+                        `sourceAudioCodec` TEXT, 
+                        `targetContainer` TEXT NOT NULL, 
+                        `targetVideoCodec` TEXT NOT NULL, 
+                        `targetAudioCodec` TEXT NOT NULL, 
+                        `status` TEXT NOT NULL, 
+                        `progress` INTEGER NOT NULL, 
+                        `attemptCount` INTEGER NOT NULL, 
+                        `createdTimestamp` INTEGER NOT NULL, 
+                        `startedTimestamp` INTEGER, 
+                        `completedTimestamp` INTEGER, 
+                        `updatedTimestamp` INTEGER NOT NULL, 
+                        `outputPath` TEXT, 
+                        `failureStage` TEXT, 
+                        `errorMessage` TEXT, 
+                        `realTimeFactor` REAL NOT NULL, 
+                        `compressionRatio` REAL NOT NULL, 
+                        `workRequestId` TEXT
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_conversion_jobs_mediaId` ON `conversion_jobs` (`mediaId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_conversion_jobs_status` ON `conversion_jobs` (`status`)")
+            }
+        }
+
+
+        val MIGRATION_35_36 = object : Migration(35, 36) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `media_items` ADD COLUMN `replacedByMediaId` TEXT")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `finalMediaUri` TEXT")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `finalMediaId` TEXT")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `replacementStage` TEXT")
+            }
+        }
+
+        val MIGRATION_36_37 = object : Migration(36, 37) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `cleanupStatus` TEXT NOT NULL DEFAULT 'NOT_ELIGIBLE'")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `cleanupEligibilityTimestamp` INTEGER")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `cleanupStartedTimestamp` INTEGER")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `cleanupCompletedTimestamp` INTEGER")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `cleanupAttemptCount` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `conversion_jobs` ADD COLUMN `lastCleanupError` TEXT")
+            }
+        }
+
 
         fun getInstance(context: Context): AuraDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -673,9 +732,12 @@ abstract class AuraDatabase : RoomDatabase() {
                         MIGRATION_28_29,
                         MIGRATION_29_30,
                         MIGRATION_30_31,
-                        MIGRATION_31_32,
+                        MIGRATION_31_32, 
                         MIGRATION_32_33,
-                        MIGRATION_33_34
+                        MIGRATION_33_34,
+                        MIGRATION_34_35,
+                        MIGRATION_35_36,
+                        MIGRATION_36_37
                     )
                     .build()
                     INSTANCE = instance

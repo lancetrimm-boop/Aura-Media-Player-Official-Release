@@ -56,7 +56,8 @@ data class MediaEntity(
     val selectionReason: String? = null,
     val creatorId: String? = null,
     val creatorName: String? = null,
-    val sourcePlatform: String? = "LOCAL"
+    val sourcePlatform: String? = "LOCAL",
+    val replacedByMediaId: String? = null
 )
 
 @Entity(tableName = "pairwise_outcomes")
@@ -222,6 +223,50 @@ data class PlaybackErrorLogEntity(
     val recoveryAttempted: Boolean = false,
     val recoverySuccessful: Boolean? = null,
     val diagnosticSummary: String? = null
+)
+
+@Entity(
+    tableName = "conversion_jobs",
+    indices = [
+        Index(value = ["mediaId"]),
+        Index(value = ["status"])
+    ]
+)
+data class ConversionJobEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val mediaId: String,
+    val sourceUri: String,
+    val fileName: String,
+    val mediaTitle: String? = null,
+    val sourceSize: Long = 0,
+    val sourceDurationMs: Long = 0,
+    val sourceVideoCodec: String? = null,
+    val sourceAudioCodec: String? = null,
+    val targetContainer: String = "MP4",
+    val targetVideoCodec: String = "H.264/AVC",
+    val targetAudioCodec: String = "AAC",
+    val status: String = "QUEUED", // ConversionJobStatus name
+    val progress: Int = 0,
+    val attemptCount: Int = 0,
+    val createdTimestamp: Long = System.currentTimeMillis(),
+    val startedTimestamp: Long? = null,
+    val completedTimestamp: Long? = null,
+    val updatedTimestamp: Long = System.currentTimeMillis(),
+    val outputPath: String? = null,
+    val failureStage: String? = null, // ConversionStage name
+    val errorMessage: String? = null,
+    val realTimeFactor: Double = 0.0,
+    val compressionRatio: Double = 0.0,
+    val workRequestId: String? = null, // For WorkManager cancellation
+    val finalMediaUri: String? = null,
+    val finalMediaId: String? = null,
+    val replacementStage: String? = null, // ReplacementStage name
+    val cleanupStatus: String = "NOT_ELIGIBLE", // OriginalCleanupStatus name
+    val cleanupEligibilityTimestamp: Long? = null,
+    val cleanupStartedTimestamp: Long? = null,
+    val cleanupCompletedTimestamp: Long? = null,
+    val cleanupAttemptCount: Int = 0,
+    val lastCleanupError: String? = null
 )
 
 

@@ -209,6 +209,8 @@ class MediaRepository(
     }
     private val scope = CoroutineScope(dispatcher + SupervisorJob() + exceptionHandler)
     private var database: AuraDatabase? = null
+    fun getDatabase(): AuraDatabase? = database
+
     var blueprintArtifactManager: com.example.data.blueprint.BlueprintArtifactManager? = null
         private set
 
@@ -219,6 +221,9 @@ class MediaRepository(
         private set
 
     var contributionQueueRepository: ContributionQueueRepository? = null
+        private set
+
+    var conversionQueueRepository: ConversionQueueRepository? = null
         private set
 
     private val _consentState = MutableStateFlow(ConsentState.NOT_DECIDED)
@@ -698,6 +703,11 @@ class MediaRepository(
 
                     intelligenceRepository = IntelligenceRepository(db.intelligenceDao(), this@MediaRepository, moshi, scope, db)
                     playbackErrorLogRepository = PlaybackErrorLogRepository(db.playbackErrorLogDao(), scope)
+                    conversionQueueRepository = ConversionQueueRepository(
+                        db.conversionJobDao(), 
+                        db.userPreferenceDao(),
+                        androidx.work.WorkManager.getInstance(context)
+                    )
                     _databaseState.value = DatabaseState.READY
                     
                     // Cleanup legacy backups if transition was stable
@@ -1916,7 +1926,7 @@ class MediaRepository(
         val scannedMediaTypes = mutableSetOf<String>()
         
         Log.d("AURA_SCAN_RUNTIME", "[REPO] discoverLocalMedia: Fetching current items.")
-        val currentItems = db.mediaDao().getAllMediaSync().associateBy { it.id }
+        val currentItems = db.mediaDao().getAllMediaIncludingDeletedSync().associateBy { it.id }
         
         // Volume-Aware Strategy: Iterate through all available external volumes (Primary, SD cards, etc.)
         val volumes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -1981,11 +1991,12 @@ class MediaRepository(
                         val status = try { CompatibilityStatus.valueOf(existing.compatibilityStatus) } catch(e: Exception) { CompatibilityStatus.ANALYSIS_PENDING }
                         val lastCheck = existing.lastCompatibilityCheckTimestamp ?: 0L
                         
-                        // Terminal Success -> Skip
+                        // Terminal Success or Already Replaced -> Skip
                         val isPlayable = status == CompatibilityStatus.PLAYABLE || 
                                         status == CompatibilityStatus.PLAYABLE_SOFTWARE_DECODE || 
                                         status == CompatibilityStatus.PLAYABLE_AFTER_CONVERSION ||
-                                        status == CompatibilityStatus.THUMBNAIL_FAILED
+                                        status == CompatibilityStatus.THUMBNAIL_FAILED ||
+                                        status == CompatibilityStatus.REPLACED
                         
                         if (isPlayable) continue
 
@@ -3482,7 +3493,8 @@ stats ->
             selectionReason = selectionReason,
             creatorId = creatorId,
             creatorName = creatorName,
-            sourcePlatform = sourcePlatform
+            sourcePlatform = sourcePlatform,
+            replacedByMediaId = replacedByMediaId
         )
     }
 
@@ -3547,7 +3559,8 @@ stats ->
             selectionReason = if (compStatus == CompatibilityStatus.ANALYSIS_FAILED) "Retry Analysis" else selectionReason,
             creatorId = creatorId,
             creatorName = creatorName,
-            sourcePlatform = sourcePlatform
+            sourcePlatform = sourcePlatform,
+            replacedByMediaId = replacedByMediaId
         )
     }
 

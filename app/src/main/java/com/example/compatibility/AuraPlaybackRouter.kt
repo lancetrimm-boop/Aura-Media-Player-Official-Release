@@ -50,6 +50,16 @@ object AuraPlaybackRouter {
             )
         }
 
+        // AURA PHASE 5: Handle Redirection for REPLACED items
+        if (item.compatibilityStatus == CompatibilityStatus.REPLACED && !item.replacedByMediaId.isNullOrBlank()) {
+            // Ideally we would resolve the new item here, but resolveRoute is synchronous 
+            // and item-focused. For now, we signal that this item is unplayable because it was replaced.
+            return PlaybackRouteResult.Corrupt(
+                reason = "This file has been replaced by a compatible version.",
+                item = item
+            )
+        }
+
         // If convertedUri is set and valid, media is guaranteed playable
         if (item.conversionStatus == ConversionStatus.CONVERTED && !item.convertedUri.isNullOrBlank()) {
             return PlaybackRouteResult.Playable(
@@ -95,9 +105,9 @@ object AuraPlaybackRouter {
                     item = item
                 )
             }
-            CompatibilityStatus.CORRUPT, CompatibilityStatus.UNREADABLE, CompatibilityStatus.DELETED -> {
+            CompatibilityStatus.CORRUPT, CompatibilityStatus.UNREADABLE, CompatibilityStatus.DELETED, CompatibilityStatus.REPLACED -> {
                 PlaybackRouteResult.Corrupt(
-                    reason = item.compatibilityReason.ifBlank { "Media file is corrupt, unreadable, or missing" },
+                    reason = item.compatibilityReason.ifBlank { "Media file is corrupt, unreadable, missing, or has been replaced" },
                     item = item
                 )
             }

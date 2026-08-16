@@ -104,7 +104,10 @@ fun AuraApp(repository: MediaRepository) {
     val playbackDiagnosticsViewModel: com.example.ui.screens.PlaybackDiagnosticsViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                return com.example.ui.screens.PlaybackDiagnosticsViewModel(repository.playbackErrorLogRepository!!) as T
+                return com.example.ui.screens.PlaybackDiagnosticsViewModel(
+                    repository.playbackErrorLogRepository!!,
+                    repository.conversionQueueRepository
+                ) as T
             }
         }
     )

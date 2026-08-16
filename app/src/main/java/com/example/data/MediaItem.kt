@@ -17,7 +17,8 @@ enum class CompatibilityStatus {
     THUMBNAIL_FAILED, // Playable but thumbnail generation failed
     UNTESTED,
     DELETED,
-    NEEDS_TRANSCODE
+    NEEDS_TRANSCODE,
+    REPLACED
 }
 
 enum class ConversionStatus {
@@ -71,7 +72,8 @@ data class MediaItem(
     val selectionReason: String? = null,
     val creatorId: String? = null,
     val creatorName: String? = null,
-    val sourcePlatform: String? = "LOCAL" // e.g. "TIKTOK", "YOUTUBE", "INSTAGRAM", "PINTEREST"
+    val sourcePlatform: String? = "LOCAL", // e.g. "TIKTOK", "YOUTUBE", "INSTAGRAM", "PINTEREST"
+    val replacedByMediaId: String? = null
 )
 
 data class PairwiseComparison(

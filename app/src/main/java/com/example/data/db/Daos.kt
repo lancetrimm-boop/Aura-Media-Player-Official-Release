@@ -15,6 +15,9 @@ interface MediaDao {
     @Query("SELECT * FROM media_items WHERE isDeleted = 0 AND compatibilityStatus NOT IN ('CORRUPT', 'UNSUPPORTED', 'DELETED')")
     suspend fun getAllMediaSync(): List<MediaEntity>
 
+    @Query("SELECT * FROM media_items")
+    suspend fun getAllMediaIncludingDeletedSync(): List<MediaEntity>
+
     @Query("SELECT * FROM media_items WHERE id = :id")
     suspend fun getMediaById(id: String): MediaEntity?
 
@@ -47,6 +50,36 @@ interface MediaDao {
 
     @Query("SELECT * FROM media_items WHERE isDeleted = 0 AND compatibilityStatus NOT IN ('CORRUPT', 'UNSUPPORTED', 'DELETED') AND lastViewedTimestamp IS NOT NULL ORDER BY lastViewedTimestamp DESC LIMIT 100")
     fun getWatchHistory(): Flow<List<MediaEntity>>
+
+    @Query("UPDATE media_items SET isDeleted = 1, replacedByMediaId = :newId WHERE id = :oldId")
+    suspend fun markAsReplaced(oldId: String, newId: String)
+
+    @Query("UPDATE pairwise_outcomes SET optionAId = :newId WHERE optionAId = :oldId")
+    suspend fun migratePairwiseA(oldId: String, newId: String)
+
+    @Query("UPDATE pairwise_outcomes SET optionBId = :newId WHERE optionBId = :oldId")
+    suspend fun migratePairwiseB(oldId: String, newId: String)
+
+    @Query("UPDATE pairwise_outcomes SET chosenId = :newId WHERE chosenId = :oldId")
+    suspend fun migratePairwiseChosen(oldId: String, newId: String)
+
+    @Query("UPDATE collection_items SET mediaId = :newId WHERE mediaId = :oldId")
+    suspend fun migrateCollectionItems(oldId: String, newId: String)
+
+    @Query("UPDATE micro_moments SET mediaId = :newId WHERE mediaId = :oldId")
+    suspend fun migrateMicroMoments(oldId: String, newId: String)
+
+    @Query("UPDATE clip_interactions SET mediaId = :newId WHERE mediaId = :oldId")
+    suspend fun migrateClipInteractions(oldId: String, newId: String)
+
+    @Query("UPDATE ai_skip_events SET mediaId = :newId WHERE mediaId = :oldId")
+    suspend fun migrateAISkipEvents(oldId: String, newId: String)
+
+    @Query("UPDATE playback_error_logs SET mediaItemId = :newId WHERE mediaItemId = :oldId")
+    suspend fun migratePlaybackErrors(oldId: String, newId: String)
+
+    @Query("UPDATE conversion_jobs SET mediaId = :newId WHERE mediaId = :oldId")
+    suspend fun migrateConversionJobs(oldId: String, newId: String)
 
     @Query("SELECT COUNT(*) FROM media_items")
     suspend fun getCount(): Int
@@ -255,5 +288,44 @@ interface PlaybackErrorLogDao {
     
     @Query("DELETE FROM playback_error_logs WHERE id NOT IN (SELECT id FROM playback_error_logs ORDER BY timestamp DESC LIMIT :limit)")
     suspend fun trimLog(limit: Int)
+}
+
+@Dao
+interface ConversionJobDao {
+    @Insert
+    suspend fun insert(job: ConversionJobEntity): Long
+
+    @Insert
+    suspend fun insertAll(jobs: List<ConversionJobEntity>)
+
+    @Update
+    suspend fun update(job: ConversionJobEntity)
+
+    @Query("SELECT * FROM conversion_jobs ORDER BY createdTimestamp DESC")
+    fun observeAllJobs(): Flow<List<ConversionJobEntity>>
+
+    @Query("SELECT * FROM conversion_jobs WHERE status IN ('QUEUED', 'PREPARING', 'CONVERTING', 'VALIDATING', 'TESTING_PLAYBACK') ORDER BY createdTimestamp ASC")
+    fun observeActiveJobs(): Flow<List<ConversionJobEntity>>
+
+    @Query("SELECT * FROM conversion_jobs WHERE id = :jobId")
+    suspend fun getJobById(jobId: Long): ConversionJobEntity?
+
+    @Query("UPDATE conversion_jobs SET status = :status, updatedTimestamp = :timestamp WHERE id = :jobId")
+    suspend fun updateStatus(jobId: Long, status: String, timestamp: Long = System.currentTimeMillis())
+
+    @Query("UPDATE conversion_jobs SET progress = :progress, updatedTimestamp = :timestamp WHERE id = :jobId")
+    suspend fun updateProgress(jobId: Long, progress: Int, timestamp: Long = System.currentTimeMillis())
+
+    @Query("DELETE FROM conversion_jobs WHERE id = :jobId")
+    suspend fun delete(jobId: Long)
+
+    @Query("DELETE FROM conversion_jobs WHERE status = 'COMPLETED'")
+    suspend fun clearCompleted()
+
+    @Query("UPDATE conversion_jobs SET status = 'CANCELLED' WHERE status = 'QUEUED'")
+    suspend fun cancelAllQueued()
+
+    @Query("SELECT * FROM conversion_jobs WHERE cleanupStatus = 'WAITING_FOR_STABILITY' OR cleanupStatus = 'CLEANUP_ELIGIBLE'")
+    suspend fun getCleanupPendingJobs(): List<ConversionJobEntity>
 }
 
