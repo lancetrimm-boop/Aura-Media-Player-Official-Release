@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.view.ViewGroup
 import androidx.annotation.OptIn
+import android.util.Log
+import androidx.media3.common.PlaybackException
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -701,6 +703,14 @@ object VideoPreviewPool {
                             seekTo(0)
                             playWhenReady = true
                         }
+                    }
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        Log.e("VideoPreviewPool", "Preview error for $itemId: ${error.message}", error)
+                        // Capture diagnostics for preview failures
+                        val repo = com.example.data.MediaRepository.instance
+                        val mediaItem = repo.getMediaItemById(itemId)
+                        repo.recordPlaybackError(error, this@apply, mediaItem)
                     }
                 })
                 prepare()

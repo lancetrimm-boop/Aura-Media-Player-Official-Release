@@ -205,9 +205,10 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
         AttentionItemEntity::class,
         SavedIntelligenceReportEntity::class,
         ContributionQueueEntity::class,
-        SearchHistoryEntity::class
+        SearchHistoryEntity::class,
+        PlaybackErrorLogEntity::class
     ],
-    version = 32,
+    version = 34,
     exportSchema = false
 )
 @androidx.room.TypeConverters(IntelligenceConverters::class)
@@ -226,6 +227,7 @@ abstract class AuraDatabase : RoomDatabase() {
     abstract fun intelligenceDao(): IntelligenceDao
     abstract fun contributionQueueDao(): ContributionQueueDao
     abstract fun searchHistoryDao(): SearchHistoryDao
+    abstract fun playbackErrorLogDao(): PlaybackErrorLogDao
 
 
     companion object {
@@ -567,6 +569,58 @@ abstract class AuraDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_32_33 = object : Migration(32, 33) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `playback_error_logs` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        `timestamp` INTEGER NOT NULL, 
+                        `mediaItemId` TEXT, 
+                        `mediaUri` TEXT, 
+                        `mediaTitle` TEXT, 
+                        `fileName` TEXT, 
+                        `mimeType` TEXT, 
+                        `durationMs` INTEGER, 
+                        `playbackPositionMs` INTEGER, 
+                        `playbackState` TEXT, 
+                        `playWhenReady` INTEGER, 
+                        `errorCode` INTEGER, 
+                        `errorCodeName` TEXT, 
+                        `errorMessage` TEXT, 
+                        `exceptionClass` TEXT, 
+                        `causeChain` TEXT, 
+                        `stackTrace` TEXT, 
+                        `rendererName` TEXT, 
+                        `rendererIndex` INTEGER, 
+                        `codecName` TEXT, 
+                        `codecMimeType` TEXT, 
+                        `deviceManufacturer` TEXT, 
+                        `deviceModel` TEXT, 
+                        `androidVersion` TEXT, 
+                        `sdkInt` INTEGER, 
+                        `appVersion` TEXT, 
+                        `media3Version` TEXT, 
+                        `networkState` TEXT, 
+                        `isLocalFile` INTEGER NOT NULL, 
+                        `sessionId` TEXT, 
+                        `recoveryAttempted` INTEGER NOT NULL DEFAULT 0, 
+                        `recoverySuccessful` INTEGER, 
+                        `diagnosticSummary` TEXT
+                    )
+                """.trimIndent())
+            }
+        }
+
+
+        val MIGRATION_33_34 = object : Migration(33, 34) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `playback_error_logs` ADD COLUMN `occurrenceCount` INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE `playback_error_logs` ADD COLUMN `lastOccurrenceTimestamp` INTEGER NOT NULL DEFAULT 0")
+                // Initialize lastOccurrenceTimestamp with existing timestamp for consistency
+                db.execSQL("UPDATE `playback_error_logs` SET `lastOccurrenceTimestamp` = `timestamp`")
+            }
+        }
+
 
         fun getInstance(context: Context): AuraDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -619,7 +673,9 @@ abstract class AuraDatabase : RoomDatabase() {
                         MIGRATION_28_29,
                         MIGRATION_29_30,
                         MIGRATION_30_31,
-                        MIGRATION_31_32
+                        MIGRATION_31_32,
+                        MIGRATION_32_33,
+                        MIGRATION_33_34
                     )
                     .build()
                     INSTANCE = instance

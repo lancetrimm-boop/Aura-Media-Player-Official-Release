@@ -318,6 +318,10 @@ fun MediaDetailScreen(
 
                 override fun onPlayerError(error: PlaybackException) {
                     Log.e("PlaylistTrace", "ExoPlayer Error: ${error.message}", error)
+                    
+                    // Capture detailed diagnostics
+                    repository.recordPlaybackError(error, this@apply, activeItem)
+
                     // Only show toast if it's a real terminal error, not just a transition glitch
                     if (error.errorCode != PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
                         Toast.makeText(context, "Playback error: ${error.localizedMessage}", Toast.LENGTH_SHORT).show()

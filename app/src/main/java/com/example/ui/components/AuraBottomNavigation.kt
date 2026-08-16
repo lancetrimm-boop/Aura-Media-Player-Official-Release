@@ -49,6 +49,7 @@ sealed class NavDestination(
     object CLEANUP_DASHBOARD : NavDestination("cleanup_dashboard", "Cleanup", Icons.Default.DeleteSweep, Icons.Outlined.DeleteSweep, "nav_cleanup_dashboard")
     object CLEANUP_REVIEW : NavDestination("cleanup_review", "Review", Icons.Default.Delete, Icons.Outlined.Delete, "nav_cleanup_review")
     object PRIVACY_POLICY : NavDestination("privacy_policy", "Privacy Policy", Icons.Default.PrivacyTip, Icons.Outlined.PrivacyTip, "nav_privacy_policy")
+    object PLAYBACK_DIAGNOSTICS : NavDestination("playback_diagnostics", "Playback Diagnostics", Icons.Default.BugReport, Icons.Outlined.BugReport, "nav_playback_diagnostics")
 }
 
 @Composable

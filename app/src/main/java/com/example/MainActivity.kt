@@ -101,6 +101,14 @@ fun AuraApp(repository: MediaRepository) {
         }
     )
 
+    val playbackDiagnosticsViewModel: com.example.ui.screens.PlaybackDiagnosticsViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                return com.example.ui.screens.PlaybackDiagnosticsViewModel(repository.playbackErrorLogRepository!!) as T
+            }
+        }
+    )
+
     var showEngagementDebugger by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
@@ -362,6 +370,7 @@ fun AuraApp(repository: MediaRepository) {
                             NavDestination.COMPARE.route -> 2
                             NavDestination.COLLECTIONS.route -> 3
                             NavDestination.PROFILE.route -> 4
+                            NavDestination.PLAYBACK_DIAGNOSTICS.route -> 4 // Same as profile for logic
                             NavDestination.INTELLIGENCE.route -> 5
                             NavDestination.FAVORITES.route -> 6
                             NavDestination.CLEANUP_REVIEW.route -> 7
@@ -374,6 +383,7 @@ fun AuraApp(repository: MediaRepository) {
                             NavDestination.COMPARE.route -> 2
                             NavDestination.COLLECTIONS.route -> 3
                             NavDestination.PROFILE.route -> 4
+                            NavDestination.PLAYBACK_DIAGNOSTICS.route -> 4
                             NavDestination.INTELLIGENCE.route -> 5
                             NavDestination.FAVORITES.route -> 6
                             NavDestination.CLEANUP_REVIEW.route -> 7
@@ -526,8 +536,19 @@ fun AuraApp(repository: MediaRepository) {
                                 onNavigateToPrivacyPolicy = {
                                     currentRoute = NavDestination.PRIVACY_POLICY.route
                                 },
+                                onNavigateToDiagnostics = {
+                                    currentRoute = NavDestination.PLAYBACK_DIAGNOSTICS.route
+                                },
                                 onLaunchAuraMoments = {
                                     showAuraMomentsSelection = true
+                                }
+                            )
+                        }
+                        NavDestination.PLAYBACK_DIAGNOSTICS.route -> {
+                            com.example.ui.screens.PlaybackDiagnosticsScreen(
+                                viewModel = playbackDiagnosticsViewModel,
+                                onBack = {
+                                    currentRoute = NavDestination.PROFILE.route
                                 }
                             )
                         }

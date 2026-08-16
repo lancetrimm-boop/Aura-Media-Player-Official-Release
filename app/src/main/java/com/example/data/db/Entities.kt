@@ -185,4 +185,43 @@ data class SearchHistoryEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Entity(tableName = "playback_error_logs")
+data class PlaybackErrorLogEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestamp: Long = System.currentTimeMillis(),
+    val mediaItemId: String? = null,
+    val mediaUri: String? = null,
+    val mediaTitle: String? = null,
+    val fileName: String? = null,
+    val mimeType: String? = null,
+    val durationMs: Long? = null,
+    val playbackPositionMs: Long? = null,
+    val playbackState: String? = null,
+    val playWhenReady: Boolean? = null,
+    val errorCode: Int? = null,
+    val errorCodeName: String? = null,
+    val errorMessage: String? = null,
+    val exceptionClass: String? = null,
+    val causeChain: String? = null,
+    val stackTrace: String? = null,
+    val rendererName: String? = null,
+    val rendererIndex: Int? = null,
+    val codecName: String? = null,
+    val codecMimeType: String? = null,
+    val deviceManufacturer: String? = null,
+    val deviceModel: String? = null,
+    val androidVersion: String? = null,
+    val sdkInt: Int? = null,
+    val appVersion: String? = null,
+    val media3Version: String? = null,
+    val networkState: String? = null,
+    val isLocalFile: Boolean = true,
+    val sessionId: String? = null,
+    val occurrenceCount: Int = 1,
+    val lastOccurrenceTimestamp: Long = System.currentTimeMillis(),
+    val recoveryAttempted: Boolean = false,
+    val recoverySuccessful: Boolean? = null,
+    val diagnosticSummary: String? = null
+)
+
 

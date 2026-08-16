@@ -224,3 +224,36 @@ interface CreatorDao {
     suspend fun update(creator: CreatorEntity)
 }
 
+@Dao
+interface PlaybackErrorLogDao {
+    @Insert
+    suspend fun insert(error: PlaybackErrorLogEntity)
+
+    @Update
+    suspend fun update(error: PlaybackErrorLogEntity)
+
+    @Query("SELECT * FROM playback_error_logs WHERE mediaItemId = :mediaItemId AND errorCode = :errorCode AND exceptionClass = :exceptionClass AND sessionId = :sessionId LIMIT 1")
+    suspend fun findExistingError(mediaItemId: String?, errorCode: Int?, exceptionClass: String?, sessionId: String?): PlaybackErrorLogEntity?
+
+    @Query("SELECT * FROM playback_error_logs ORDER BY timestamp DESC")
+    fun observeRecentErrors(): Flow<List<PlaybackErrorLogEntity>>
+
+    @Query("SELECT * FROM playback_error_logs WHERE mediaItemId = :mediaItemId ORDER BY timestamp DESC")
+    fun getErrorsForMedia(mediaItemId: String): Flow<List<PlaybackErrorLogEntity>>
+
+    @Query("SELECT * FROM playback_error_logs WHERE sessionId = :sessionId ORDER BY timestamp DESC")
+    fun getErrorsForSession(sessionId: String): Flow<List<PlaybackErrorLogEntity>>
+
+    @Query("DELETE FROM playback_error_logs WHERE id = :errorId")
+    suspend fun delete(errorId: Long)
+
+    @Query("DELETE FROM playback_error_logs")
+    suspend fun deleteAll()
+
+    @Query("SELECT * FROM playback_error_logs ORDER BY timestamp DESC LIMIT :limit")
+    fun getRecentErrorsBounded(limit: Int): Flow<List<PlaybackErrorLogEntity>>
+    
+    @Query("DELETE FROM playback_error_logs WHERE id NOT IN (SELECT id FROM playback_error_logs ORDER BY timestamp DESC LIMIT :limit)")
+    suspend fun trimLog(limit: Int)
+}
+

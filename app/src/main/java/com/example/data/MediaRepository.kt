@@ -215,6 +215,9 @@ class MediaRepository(
     var intelligenceRepository: IntelligenceRepository? = null
         private set
 
+    var playbackErrorLogRepository: PlaybackErrorLogRepository? = null
+        private set
+
     var contributionQueueRepository: ContributionQueueRepository? = null
         private set
 
@@ -460,6 +463,13 @@ class MediaRepository(
     private var _lastPlaybackPositionMs = 0L
     val lastPlaybackPositionMs: Long get() = _lastPlaybackPositionMs
 
+    private var _playbackSessionId = com.example.util.AuraPlaybackDiagnostics.createSessionId()
+    val playbackSessionId: String get() = _playbackSessionId
+
+    fun refreshPlaybackSessionId() {
+        _playbackSessionId = com.example.util.AuraPlaybackDiagnostics.createSessionId()
+    }
+
     private var _isResumingFromBackground = false
     val isResumingFromBackground: Boolean get() = _isResumingFromBackground
 
@@ -687,6 +697,7 @@ class MediaRepository(
                     }
 
                     intelligenceRepository = IntelligenceRepository(db.intelligenceDao(), this@MediaRepository, moshi, scope, db)
+                    playbackErrorLogRepository = PlaybackErrorLogRepository(db.playbackErrorLogDao(), scope)
                     _databaseState.value = DatabaseState.READY
                     
                     // Cleanup legacy backups if transition was stable
@@ -1531,6 +1542,7 @@ class MediaRepository(
         
         // AURA PHASE 2: Reset session state for new selections
         _lastPlaybackPositionMs = 0L
+        refreshPlaybackSessionId()
         _isResumingFromBackground = false
         _isPlayerActive.value = true
         
@@ -2254,6 +2266,36 @@ class MediaRepository(
             )
         } catch (e: Exception) {
             // WorkManager fallback
+        }
+    }
+
+    fun recordPlaybackError(
+        error: androidx.media3.common.PlaybackException,
+        player: androidx.media3.common.Player,
+        mediaItem: MediaItem?
+    ) {
+        val repo = playbackErrorLogRepository ?: return
+        
+        scope.launch {
+            try {
+                val appVer = try {
+                    applicationContext?.packageManager?.getPackageInfo(applicationContext?.packageName ?: "", 0)?.versionName ?: "1.0.0"
+                } catch (e: Exception) { "1.0.0" }
+                
+                val diagnosticRecord = com.example.util.AuraPlaybackDiagnostics.captureError(
+                    error = error,
+                    player = player,
+                    mediaItem = mediaItem,
+                    sessionId = _playbackSessionId,
+                    appVersion = appVer
+                )
+                
+                Log.e("AuraPlaybackDiagnostics", "Recording playback error: ${diagnosticRecord.diagnosticSummary} (Session: ${_playbackSessionId})")
+                repo.recordError(diagnosticRecord)
+            } catch (t: Throwable) {
+                Log.e("AuraPlaybackDiagnostics", "Critical failure in diagnostic collector: ${t.message}", t)
+                // Fail-safe: do not crash the player
+            }
         }
     }
 

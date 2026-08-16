@@ -302,6 +302,7 @@ fun ProfileScreen(
     onNavigateToFavorites: () -> Unit,
     onNavigateToCleanup: () -> Unit,
     onNavigateToPrivacyPolicy: () -> Unit,
+    onNavigateToDiagnostics: () -> Unit,
     onLaunchAuraMoments: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -321,6 +322,16 @@ fun ProfileScreen(
     )
     val dashboardState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
     val report = dashboardState.report
+
+    val diagnosticsViewModel: PlaybackDiagnosticsViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return PlaybackDiagnosticsViewModel(repository.playbackErrorLogRepository!!) as T
+            }
+        }
+    )
+    val errorLogs by diagnosticsViewModel.errorLogs.collectAsStateWithLifecycle()
     
     var showFeedbackDialog by remember { mutableStateOf(false) }
     var selectedCluster by remember { mutableStateOf<TasteClusterEvidence?>(null) }
@@ -558,6 +569,34 @@ fun ProfileScreen(
                             
                             AuraVersionInfo()
                             
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // 5. PLAYBACK DIAGNOSTICS
+                            ProfileSectionTitle("Playback Diagnostics")
+                            Text(
+                                text = "Review playback failures and technical diagnostics stored on this device.",
+                                fontSize = 13.sp,
+                                color = AuraMutedSlate,
+                                modifier = Modifier.padding(bottom = 20.dp, start = 4.dp)
+                            )
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(24.dp)),
+                                color = AuraSubtleSurface,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AuraSubtleBorder)
+                            ) {
+                                val totalErrors = errorLogs.sumOf { it.occurrenceCount }
+                                Column {
+                                    SettingsClickRow(
+                                        icon = Icons.Default.BugReport,
+                                        title = "View Playback Diagnostics",
+                                        subtitle = if (totalErrors == 0) "No playback errors recorded" else "$totalErrors playback errors recorded",
+                                        onClick = { onNavigateToDiagnostics() }
+                                    )
+                                }
+                            }
+                            
                             Spacer(modifier = Modifier.height(48.dp))
                         }
                     }
@@ -769,6 +808,34 @@ fun ProfileScreen(
                         }
 
                         AuraVersionInfo()
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // 5. PLAYBACK DIAGNOSTICS
+                        ProfileSectionTitle("Playback Diagnostics")
+                        Text(
+                            text = "Review playback failures and technical diagnostics stored on this device.",
+                            fontSize = 13.sp,
+                            color = AuraMutedSlate,
+                            modifier = Modifier.padding(bottom = 20.dp, start = 4.dp)
+                        )
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(24.dp)),
+                            color = AuraSubtleSurface,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AuraSubtleBorder)
+                        ) {
+                            val totalErrors = errorLogs.sumOf { it.occurrenceCount }
+                            Column {
+                                SettingsClickRow(
+                                    icon = Icons.Default.BugReport,
+                                    title = "View Playback Diagnostics",
+                                    subtitle = if (totalErrors == 0) "No playback errors recorded" else "$totalErrors playback errors recorded",
+                                    onClick = { onNavigateToDiagnostics() }
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(48.dp))
                     }
