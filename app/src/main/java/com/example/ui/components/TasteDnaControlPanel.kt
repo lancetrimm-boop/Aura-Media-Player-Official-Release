@@ -223,7 +223,7 @@ private fun AiLearningToggleSection(
 }
 
 @Composable
-private fun TasteSliders(
+internal fun TasteSliders(
     tasteDNA: TasteDNA,
     onTasteDnaUpdate: (TasteDNA) -> Unit
 ) {
@@ -422,9 +422,12 @@ internal fun AiDescriptionSection(aiDescription: String?) {
 @Composable
 internal fun IntelligenceWeightsSection(
     preferenceProfile: TasteDNA.PreferenceProfile,
-    onPreferenceProfileUpdate: (TasteDNA.PreferenceProfile) -> Unit
+    onPreferenceProfileUpdate: (TasteDNA.PreferenceProfile) -> Unit,
+    showTitle: Boolean = true
 ) {
-    ControlSectionHeader("Discovery Intelligence")
+    if (showTitle) {
+        ControlSectionHeader("Discovery Intelligence")
+    }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ConsumerSlider(
             label = "Content Similarity",

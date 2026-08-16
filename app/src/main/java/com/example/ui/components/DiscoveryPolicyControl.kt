@@ -67,7 +67,7 @@ fun DiscoveryPolicyControl(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = mode.name,
+                            text = mode.name.lowercase().replaceFirstChar { it.uppercase() },
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = if (isSelected) Color.White else AuraOnSurface

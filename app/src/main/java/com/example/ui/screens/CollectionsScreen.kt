@@ -70,6 +70,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import com.example.ui.components.AuraMediaThumbnail
+import com.example.ui.components.TasteClusterCard
+import com.example.data.intelligence.TasteClusterEvidence
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.outlined.AutoAwesome
 
 
@@ -96,9 +103,21 @@ fun CollectionsScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedBrowserCollection by remember { mutableStateOf<SmartCollection?>(null) }
+    var selectedCluster by remember { mutableStateOf<TasteClusterEvidence?>(null) }
     
     val watchHistory by repository.watchHistory.collectAsStateWithLifecycle()
     val recentSearches by repository.recentSearches.collectAsStateWithLifecycle()
+
+    val dashboardViewModel: IntelligenceDashboardViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return IntelligenceDashboardViewModel(repository.intelligenceRepository!!) as T
+            }
+        }
+    )
+    val dashboardState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
+    val report = dashboardState.report
 
 
     if (selectedBrowserCollection != null) {
@@ -311,6 +330,44 @@ fun CollectionsScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // SIGNATURE STYLES
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                // FORCE SHOW FOR DEBUGGING if report is missing or empty
+                val clusters = report?.tasteProfile?.tasteClusters ?: emptyList()
+                
+                Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                    Text(
+                        text = "SIGNATURE STYLES",
+                        color = DiscoveryViolet,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    if (clusters.isEmpty()) {
+                        Text(
+                            text = "No clusters found in report. Report exists: ${report != null}",
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    } else {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(clusters) { cluster ->
+                                TasteClusterCard(
+                                    evidence = cluster,
+                                    onClick = { selectedCluster = cluster },
+                                    modifier = Modifier.width(280.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             // AURA MOMENTS HERO CARD
             item(span = { GridItemSpan(maxLineSpan) }) {
                 AuraMomentsHeroCard(
@@ -418,6 +475,13 @@ fun CollectionsScreen(
                 }
             }
         }
+    }
+
+    if (selectedCluster != null) {
+        TasteClusterDetailView(
+            evidence = selectedCluster!!,
+            onDismiss = { selectedCluster = null }
+        )
     }
 }
 

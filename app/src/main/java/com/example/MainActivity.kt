@@ -525,6 +525,9 @@ fun AuraApp(repository: MediaRepository) {
                                 },
                                 onNavigateToPrivacyPolicy = {
                                     currentRoute = NavDestination.PRIVACY_POLICY.route
+                                },
+                                onLaunchAuraMoments = {
+                                    showAuraMomentsSelection = true
                                 }
                             )
                         }

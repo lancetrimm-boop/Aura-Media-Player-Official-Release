@@ -175,7 +175,7 @@ class IntelligenceReportingEngine(private val database: AuraDatabase) {
         
         // Define high-level clusters and their associated dimensions
         val mapping = listOf(
-            ClusterMapping("cinematic", "Cinematic & Atmospheric", listOf("Depth", "Lighting", "Dynamic Range", "Contrast")),
+            ClusterMapping("cinematic", "Clean & Atmospheric", listOf("Depth", "Lighting", "Dynamic Range", "Contrast")),
             ClusterMapping("vibrant", "Vibrant & Energetic", listOf("Vibrancy", "Saturation", "Motion", "Mood")),
             ClusterMapping("minimal", "Minimal & Clean", listOf("Minimalism", "Symmetry", "Harmony", "Framing")),
             ClusterMapping("tactile", "Tactile & Organic", listOf("Texture", "Grain", "Naturalism", "Warmth")),
@@ -279,15 +279,15 @@ class IntelligenceReportingEngine(private val database: AuraDatabase) {
         if (library.isEmpty()) return null
 
         // Score library items based on alignment with cluster traits and behavioral signals
-        // CRITICAL: Only consider items with valid visual evidence (imageUrl)
-        return library.filter { it.imageUrl.isNotBlank() && (it.id !in usedIds || library.size < 6) }
+        // CRITICAL: Only consider items with valid visual evidence (imageUrl or uriPath)
+        return library.filter { (it.imageUrl.isNotBlank() || it.uriPath.isNotBlank()) && (it.id !in usedIds || library.size < 6) }
             .map { entity ->
                 val traitScore = calculateTraitAlignment(entity, map.dimensions)
                 val behavioralScore = calculateBehavioralSignal(entity)
                 val totalScore = (traitScore * 0.4) + (behavioralScore * 0.6)
                 entity to totalScore
             }
-            .filter { it.second > 0.3 } // Threshold for relevance
+            .filter { it.second > 0.15 } // Lower threshold to ensure clusters appear for newer libraries
             .sortedByDescending { it.second }
             .firstOrNull()?.first
     }
